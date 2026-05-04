@@ -1,4 +1,5 @@
 // 3x17-thread_pool.cpp
+// ====================
 // Minimal thread pool using std::jthread, stop_token, and condition_variable.
 // Amortises thread-creation overhead for workloads with many short tasks.
 // Components:
@@ -6,6 +7,7 @@
 //   - Thread-safe task queue (std::queue + mutex)
 //   - condition_variable to wake sleeping workers when work arrives
 // BEST PRACTICE: size the pool to hardware_concurrency() or a measured optimum.
+//
 // Requires: C++20
 
 #include <condition_variable>

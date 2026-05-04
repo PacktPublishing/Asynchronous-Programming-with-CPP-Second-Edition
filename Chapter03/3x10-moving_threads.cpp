@@ -1,6 +1,8 @@
 // 3x10-moving_threads.cpp
+// =======================
 // std::thread is move-only: two objects cannot represent the same OS thread.
 // After a move the source object no longer represents any thread.
+//
 // Requires: C++11
 
 #include <chrono>

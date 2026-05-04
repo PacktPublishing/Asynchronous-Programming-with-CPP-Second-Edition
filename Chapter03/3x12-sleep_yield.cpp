@@ -1,9 +1,11 @@
 // 3x12-sleep_yield.cpp
+// ====================
 // Controlling thread scheduling:
 //   sleep_for  — block for at least a given duration
 //   sleep_until — block until a specific time point (use steady_clock)
 //   yield      — hint to the OS to run another thread (implementation-defined)
 // NOTE: yield() is not a precise timing mechanism; use sleep_for for that.
+//
 // Requires: C++11
 
 #include <chrono>

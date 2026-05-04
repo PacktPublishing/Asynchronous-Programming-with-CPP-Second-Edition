@@ -1,7 +1,9 @@
 // 3x08-thread_lifetime.cpp
+// ========================
 // join(), joinable(), swap(), and move semantics for std::thread.
 // IMPORTANT: destroying a joinable std::thread calls std::terminate.
 //            std::jthread (3x11) eliminates this hazard.
+//
 // Requires: C++11
 
 #include <chrono>

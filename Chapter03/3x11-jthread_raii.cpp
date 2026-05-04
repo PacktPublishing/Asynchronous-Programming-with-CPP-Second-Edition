@@ -1,7 +1,9 @@
 // 3x11-jthread_raii.cpp
+// =====================
 // std::jthread (C++20): RAII joining thread.
 // - Joins automatically in its destructor (even if an exception is thrown).
 // - Multiple jthreads are destroyed in reverse construction order (LIFO).
+//
 // Requires: C++20
 
 #include <chrono>

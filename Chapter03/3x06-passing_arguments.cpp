@@ -1,9 +1,11 @@
 // 3x06-passing_arguments.cpp
+// ==========================
 // Four argument-passing patterns for std::thread:
 //   - by value (safe, costs a copy)
 //   - by reference via std::ref / std::cref
 //   - via lambda capture
 //   - move-only types via std::move
+//
 // Requires: C++11
 
 #include <functional>

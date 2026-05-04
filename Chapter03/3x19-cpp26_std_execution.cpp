@@ -1,4 +1,5 @@
 // 3x19-cpp26_std_execution.cpp
+// ============================
 // PREVIEW: C++26 std::execution (P2300 — senders and receivers).
 // Uses the NVIDIA stdexec reference implementation.
 //
@@ -15,6 +16,7 @@
 //
 // Build with: clang++ -std=c++26 -I<path-to-stdexec>/include 3x19-cpp26_std_execution.cpp
 // Repository: https://github.com/NVIDIA/stdexec
+//
 // Requires: stdexec reference implementation (P2300), C++23/26 compiler
 
 #include <stdexec/execution.hpp>

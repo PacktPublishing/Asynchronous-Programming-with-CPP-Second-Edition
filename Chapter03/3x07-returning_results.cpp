@@ -1,8 +1,10 @@
 // 3x07-returning_results.cpp
+// ==========================
 // Three patterns for getting a result back from a thread:
 //   Pattern 1: output via reference argument
 //   Pattern 2: output via shared variable protected by a mutex
 //   Pattern 3: output via std::promise / std::future (preview — Chapter 7)
+//
 // Requires: C++11 (pattern 3: C++11)
 
 #include <future>

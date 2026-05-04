@@ -1,7 +1,9 @@
 // 3x13-atomic_flag_cancellation.cpp
+// =================================
 // Pre-C++20 cancellation pattern: a shared std::atomic_bool flag checked
 // by the thread each iteration. This is the boilerplate that stop_token
 // (see 3x14) was designed to replace.
+//
 // Requires: C++20 (jthread; the pattern itself works from C++11)
 
 #include <atomic>

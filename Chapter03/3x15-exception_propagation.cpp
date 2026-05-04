@@ -1,9 +1,11 @@
 // 3x15-exception_propagation.cpp
+// ==============================
 // Propagating an exception from a worker thread to the calling thread.
 // Exceptions do not cross thread boundaries on their own; use
 // std::current_exception() to capture and std::rethrow_exception() to re-throw.
 // BEST PRACTICE: prefer std::promise/std::future (Chapter 7) which handle
 // this boilerplate automatically.
+//
 // Requires: C++11
 
 #include <exception>

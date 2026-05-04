@@ -1,4 +1,5 @@
 // 3x14-stop_token.cpp
+// ===================
 // C++20 cooperative cancellation: stop_token, stop_source, stop_callback.
 //
 //   stop_source  — write side: issues a stop request
@@ -7,6 +8,7 @@
 //
 // BEST PRACTICE: check stop_requested() at the top of the loop body,
 // not just at the bottom, to react without completing a full extra iteration.
+//
 // Requires: C++20
 
 #include <chrono>

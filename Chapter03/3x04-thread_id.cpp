@@ -1,7 +1,9 @@
 // 3x04-thread_id.cpp
+// ==================
 // Retrieving and printing thread identifiers.
 // std::thread::id is printable, comparable, hashable, and usable as a map key.
 // NOTE: IDs can be reused after a thread has finished and been joined.
+//
 // Requires: C++11
 
 #include <chrono>

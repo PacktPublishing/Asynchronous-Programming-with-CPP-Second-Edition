@@ -1,8 +1,10 @@
 // 3x05-synchronized_output.cpp
+// ============================
 // Three approaches to console output from multiple threads:
 //   1. Raw std::cout          — interleaved output (intentionally broken demo)
 //   2. std::ostringstream     — pre-C++20 single-write workaround
 //   3. std::osyncstream       — C++20 canonical solution
+//
 // Requires: C++20
 
 #include <iostream>

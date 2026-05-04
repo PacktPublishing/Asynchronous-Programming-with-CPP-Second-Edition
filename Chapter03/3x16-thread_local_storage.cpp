@@ -1,8 +1,10 @@
 // 3x16-thread_local_storage.cpp
+// =============================
 // Thread-local storage (TLS): each thread owns an independent copy of val.
 // No synchronisation overhead — reads and writes are always thread-safe
 // because no thread can see another thread's copy.
 // NOTE: TLS increases memory usage proportionally to the number of threads.
+//
 // Requires: C++11
 
 #include <iostream>

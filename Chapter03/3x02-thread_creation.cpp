@@ -1,7 +1,9 @@
 // 3x02-thread_creation.cpp
+// ========================
 // Six ways to construct a std::thread: free function, stored lambda,
 // embedded lambda, function object, non-static member function,
 // and static member function.
+//
 // Requires: C++11
 
 #include <iostream>

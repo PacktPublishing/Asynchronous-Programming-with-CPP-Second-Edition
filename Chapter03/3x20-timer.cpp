@@ -1,7 +1,9 @@
 // 3x20-timer.cpp
+// ==============
 // Putting it all together: a production-quality periodic Timer.
 // Uses std::jthread + stop_token for RAII lifetime and cooperative cancellation.
 // Notice what is absent: no explicit join(), no atomic<bool> running flag.
+//
 // Requires: C++20
 
 #include <chrono>
