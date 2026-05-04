@@ -98,11 +98,33 @@ gh workflow run CI
 
 Or use the **Actions** tab > **CI** > **Run workflow** button on GitHub.
 
-## Excluded examples
+## Optional examples
 
 `3x19-cpp26_std_execution.cpp` requires the [NVIDIA stdexec](https://github.com/NVIDIA/stdexec)
-reference implementation of P2300. It is excluded from the default build.
-To compile it manually:
+reference implementation of P2300 and a C++26-capable toolchain. It is excluded
+from the default build.
+
+### Build via CMake (recommended)
+
+Enable the `BUILD_STDEXEC_EXAMPLES` option — CMake will fetch stdexec automatically:
+
+```bash
+cmake --preset release-clang -DBUILD_STDEXEC_EXAMPLES=ON
+cmake --build --preset release-clang
+```
+
+The first configure pulls stdexec from GitHub via `FetchContent`, so an internet
+connection is required.
+
+> **Note on the C++ standard flag.** The rest of the project builds at C++23,
+> set globally in the root `CMakeLists.txt`. The 3x19 target overrides this by
+> appending `-std=c++26` directly via `target_compile_options`, rather than
+> using `target_compile_features(... cxx_std_26)`. CMake 3.25 does not yet tag
+> Clang 18 / GCC 14 as `cxx_std_26`-capable, so the feature-based form fails
+> at configure time. The raw flag bypasses that check and works on any
+> compiler that accepts `-std=c++26`.
+
+### Build manually (no CMake)
 
 ```bash
 clang++ -std=c++26 -I<path-to-stdexec>/include \

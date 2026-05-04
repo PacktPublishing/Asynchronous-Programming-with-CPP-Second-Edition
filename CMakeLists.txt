@@ -33,5 +33,21 @@ if(ENABLE_TSAN)
     add_link_options(-fsanitize=thread)
 endif()
 
+# Optional: build C++26 std::execution / NVIDIA stdexec examples.
+# When ON, stdexec is fetched once at the project level and shared across
+# every chapter that defines such a target.
+option(BUILD_STDEXEC_EXAMPLES
+    "Build std::execution examples (fetches NVIDIA stdexec via FetchContent; needs C++26 toolchain)" OFF)
+
+if(BUILD_STDEXEC_EXAMPLES)
+    include(FetchContent)
+    set(STDEXEC_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(STDEXEC_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(stdexec
+        GIT_REPOSITORY https://github.com/NVIDIA/stdexec.git
+        GIT_TAG        main)
+    FetchContent_MakeAvailable(stdexec)
+endif()
+
 # Add chapter subdirectories
 add_subdirectory(Chapter03)
