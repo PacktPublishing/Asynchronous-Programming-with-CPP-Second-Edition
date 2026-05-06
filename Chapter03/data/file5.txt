@@ -1,0 +1,5 @@
+a thread pool amortises the cost of thread creation
+workers pick up tasks from a shared queue
+the queue is protected by a mutex and a condition variable
+condition_variable_any accepts a stop_token in c plus plus 23
+senders and receivers are the c plus plus 26 execution model

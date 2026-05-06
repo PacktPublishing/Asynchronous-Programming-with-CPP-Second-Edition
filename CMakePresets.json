@@ -1,0 +1,107 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "base-gcc",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "base-clang",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "debug-gcc",
+      "displayName": "Debug GCC",
+      "inherits": "base-gcc",
+      "binaryDir": "${sourceDir}/.build/debug-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "debug-clang",
+      "displayName": "Debug Clang",
+      "inherits": "base-clang",
+      "binaryDir": "${sourceDir}/.build/debug-clang",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release-gcc",
+      "displayName": "Release GCC",
+      "inherits": "base-gcc",
+      "binaryDir": "${sourceDir}/.build/release-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "release-clang",
+      "displayName": "Release Clang",
+      "inherits": "base-clang",
+      "binaryDir": "${sourceDir}/.build/release-clang",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "asan-gcc",
+      "displayName": "Debug GCC with ASan",
+      "inherits": "base-gcc",
+      "binaryDir": "${sourceDir}/.build/asan-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ENABLE_ASAN": "ON"
+      }
+    },
+    {
+      "name": "tsan-gcc",
+      "displayName": "Debug GCC with TSan",
+      "inherits": "base-gcc",
+      "binaryDir": "${sourceDir}/.build/tsan-gcc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ENABLE_TSAN": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug (alias for debug-gcc)",
+      "inherits": "debug-gcc"
+    },
+    {
+      "name": "release",
+      "displayName": "Release (alias for release-gcc)",
+      "inherits": "release-gcc"
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug-gcc",     "configurePreset": "debug-gcc" },
+    { "name": "debug-clang",   "configurePreset": "debug-clang" },
+    { "name": "release-gcc",   "configurePreset": "release-gcc" },
+    { "name": "release-clang", "configurePreset": "release-clang" },
+    { "name": "asan-gcc",      "configurePreset": "asan-gcc" },
+    { "name": "tsan-gcc",      "configurePreset": "tsan-gcc" },
+    { "name": "debug",         "configurePreset": "debug" },
+    { "name": "release",       "configurePreset": "release" }
+  ]
+}

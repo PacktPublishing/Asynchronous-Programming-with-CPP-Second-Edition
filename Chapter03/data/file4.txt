@@ -1,0 +1,5 @@
+concurrency parallelism and asynchrony are distinct concepts
+concurrency is about managing many tasks at once
+parallelism is about executing many tasks at once
+asynchrony is about not blocking while a task completes
+the operating system manages processes and threads

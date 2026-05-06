@@ -1,0 +1,5 @@
+threads are the backbone of concurrent programs
+modern c++ provides std::thread and std::jthread
+a jthread joins automatically on destruction
+stop_token enables cooperative cancellation
+synchronized output uses std::osyncstream
