@@ -20,6 +20,15 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
+# Clang (e.g. 18.x) reports __cpp_concepts == 201907L, but libstdc++'s <expected>
+# only enables std::expected when __cpp_concepts >= 202002L (see bits/version.h).
+# Advertise the final C++20 concepts value so std::expected becomes visible under
+# Clang. Redefining to the same value on a future Clang is harmless; the warning
+# is silenced. GCC is unaffected.
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-D__cpp_concepts=202002L -Wno-builtin-macro-redefined)
+endif()
+
 # Optional sanitizer support
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 if(ENABLE_ASAN)
@@ -51,3 +60,4 @@ endif()
 
 # Add chapter subdirectories
 add_subdirectory(Chapter03)
+add_subdirectory(Chapter07)
