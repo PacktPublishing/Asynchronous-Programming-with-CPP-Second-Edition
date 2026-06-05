@@ -61,3 +61,4 @@ endif()
 # Add chapter subdirectories
 add_subdirectory(Chapter03)
 add_subdirectory(Chapter07)
+add_subdirectory(Chapter08)
