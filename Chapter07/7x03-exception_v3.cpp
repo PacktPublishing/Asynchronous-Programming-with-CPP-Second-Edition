@@ -1,4 +1,5 @@
 // 7x03-exception_v3.cpp
+// ====================
 // Running example v3: exception propagation across the thread boundary.
 // The worker wraps its body in try/catch and forwards any exception to the
 // promise via set_exception; the caller's get() rethrows it.

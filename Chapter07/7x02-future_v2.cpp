@@ -1,4 +1,5 @@
 // 7x02-future_v2.cpp
+// ==================
 // Running example v2: consumer side. The caller blocks in fut.get() until the
 // worker calls set_value, then moves the result out. After get() the future is
 // consumed (valid() returns false).

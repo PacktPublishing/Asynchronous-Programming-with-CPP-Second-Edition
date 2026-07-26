@@ -1,4 +1,5 @@
 // 8x03-destructor_benchmark.cpp
+// =============================
 // Microbenchmark for the destructor-blocks rule. Three patterns spawn the
 // same number of threads; only the third lets them overlap.
 // Expected on an 8-thread machine with 10 ms tasks: ~334 / ~334 / ~22 ms.
@@ -20,7 +21,8 @@ unsigned work(unsigned x) {
 
 auto duration_from_ms(std::chrono::steady_clock::time_point start) {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::steady_clock::now() - start).count();
+             std::chrono::steady_clock::now() - start)
+      .count();
 }
 
 int main() {
@@ -32,8 +34,8 @@ int main() {
     auto t0 = std::chrono::steady_clock::now();
     for (unsigned i = 0; i < NUM_TASKS; ++i)
       (void)std::async(std::launch::async, work, i);
-    std::cout << "Discarded future:                 "
-              << duration_from_ms(t0) << " ms\n";
+    std::cout << "Discarded future:                 " << duration_from_ms(t0)
+              << " ms\n";
   }
 
   // Pattern 2: bind to a per-iteration local. Same end-of-statement
@@ -44,8 +46,8 @@ int main() {
       auto fut = std::async(std::launch::async, work, i);
       (void)fut;
     }
-    std::cout << "Per-iteration auto local:         "
-              << duration_from_ms(t0) << " ms\n";
+    std::cout << "Per-iteration auto local:         " << duration_from_ms(t0)
+              << " ms\n";
   }
 
   // Pattern 3: keep every future alive in a vector. Launch loop returns
@@ -59,10 +61,10 @@ int main() {
 
     std::vector<unsigned> results;
     results.reserve(NUM_TASKS);
-    for (auto& f : futs)
+    for (auto &f : futs)
       results.push_back(f.get());
-    std::cout << "Futures vector, drained at the end: "
-              << duration_from_ms(t0) << " ms"
+    std::cout << "Futures vector, drained at the end: " << duration_from_ms(t0)
+              << " ms"
               << " (collected " << results.size() << " results)\n";
   }
 }

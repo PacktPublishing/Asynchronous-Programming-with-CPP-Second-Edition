@@ -1,4 +1,5 @@
 // 7x07-packaged_task_intro.cpp
+// ============================
 // std::packaged_task fundamentals: wrap a callable, retrieve its future,
 // invoke it on a thread or synchronously.
 
@@ -16,10 +17,9 @@ int main() {
   std::cout << "task1: 2^10 = " << fut1.get() << "\n";
 
   // Lambda invoked synchronously.
-  std::packaged_task<double(double, double)> task2([](double a, double b) {
-    return std::pow(a, b);
-  });
+  std::packaged_task<double(double, double)> task2(
+      [](double a, double b) { return std::pow(a, b); });
   auto fut2 = task2.get_future();
-  task2(3.0, 4.0);     // invoke directly — no thread
+  task2(3.0, 4.0); // invoke directly — no thread
   std::cout << "task2: 3^4 = " << fut2.get() << "\n";
 }

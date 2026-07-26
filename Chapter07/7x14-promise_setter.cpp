@@ -1,4 +1,5 @@
 // 7x14-promise_setter.cpp
+// =======================
 // Fix for the jthread x promise pitfall (see 7x13): an RAII guard that
 // converts a missed set_value/set_exception into an eager broken_promise so
 // the consumer learns about the failure as soon as the worker's stack unwinds.
@@ -11,18 +12,19 @@
 
 using namespace std::chrono_literals;
 
-struct Reply { int status; };
+struct Reply {
+  int status;
+};
 
-template <typename T>
-class promise_setter {
-  std::promise<T>& prom_;
+template <typename T> class promise_setter {
+  std::promise<T> &prom_;
   bool armed_ = true;
 
 public:
-  explicit promise_setter(std::promise<T>& p) : prom_(p) {}
+  explicit promise_setter(std::promise<T> &p) : prom_(p) {}
 
-  promise_setter(const promise_setter&) = delete;
-  promise_setter& operator=(const promise_setter&) = delete;
+  promise_setter(const promise_setter &) = delete;
+  promise_setter &operator=(const promise_setter &) = delete;
 
   ~promise_setter() {
     if (armed_) {
@@ -54,11 +56,11 @@ int main() {
   auto t0 = std::chrono::steady_clock::now();
 
   std::jthread worker([&prom, some_precondition_failed]() mutable {
-    promise_setter<Reply> guard(prom);   // arms the safety net
-    std::this_thread::sleep_for(500ms);  // setup
+    promise_setter<Reply> guard(prom);  // arms the safety net
+    std::this_thread::sleep_for(500ms); // setup
     if (some_precondition_failed) {
       std::cerr << "[worker] precondition failed; returning early\n";
-      return;   // guard's destructor relays broken_promise immediately
+      return; // guard's destructor relays broken_promise immediately
     }
     guard.set(Reply{200});
   });
@@ -66,10 +68,12 @@ int main() {
   try {
     Reply r = fut.get();
     std::cout << "status=" << r.status << "\n";
-  } catch (const std::future_error& e) {
+  } catch (const std::future_error &e) {
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                       std::chrono::steady_clock::now() - t0).count();
-    std::cerr << "broken_promise after " << elapsed << " ms (still ~500 ms in this demo)\n";
+                       std::chrono::steady_clock::now() - t0)
+                       .count();
+    std::cerr << "broken_promise after " << elapsed
+              << " ms (still ~500 ms in this demo)\n";
     std::cerr << "but the worker's exit path is now deterministic, not racy.\n";
   }
 }
