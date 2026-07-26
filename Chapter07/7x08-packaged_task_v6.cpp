@@ -1,6 +1,7 @@
 // 7x08-packaged_task_v6.cpp
+// =========================
 // Running example v6: refactor the fetcher to use std::packaged_task. The
-// worker-side try/catch boilerplate from v3 is gone — packaged_task wraps the
+// worker-side try/catch boilerplate from v3 is gone. packaged_task wraps the
 // callable with that pattern internally.
 
 #include <chrono>
@@ -17,16 +18,15 @@ struct Reply {
   std::string body;
 };
 
-Reply fetch_blocking(const std::string& replica) {
+Reply fetch_blocking(const std::string &replica) {
   std::this_thread::sleep_for(200ms);
   return Reply{200, "payload from " + replica};
 }
 
 int main() {
-  std::packaged_task<Reply(std::string)> task(
-      [](std::string replica) -> Reply {
-        return fetch_blocking(replica);   // exceptions captured automatically
-      });
+  std::packaged_task<Reply(std::string)> task([](std::string replica) -> Reply {
+    return fetch_blocking(replica); // exceptions captured automatically
+  });
 
   std::future<Reply> fut = task.get_future();
   std::jthread worker(std::move(task), "replica-A");
@@ -35,7 +35,7 @@ int main() {
     try {
       Reply r = fut.get();
       std::cout << "status=" << r.status << " body=\"" << r.body << "\"\n";
-    } catch (const std::system_error& e) {
+    } catch (const std::system_error &e) {
       std::cerr << "fetch failed: " << e.what() << "\n";
     }
   } else {

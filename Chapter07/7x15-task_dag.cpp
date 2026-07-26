@@ -1,4 +1,5 @@
 // 7x15-task_dag.cpp
+// =================
 // Asynchronous task DAG built from std::shared_future<void> as completion
 // signals and std::jthread as the execution unit per task.
 //
@@ -20,14 +21,13 @@
 using namespace std::chrono_literals;
 #define sync_cout std::osyncstream(std::cout)
 
-template <typename Func>
-class Task {
+template <typename Func> class Task {
 public:
-  Task(int id, Func& func) : id_(id), func_(func) {
+  Task(int id, Func &func) : id_(id), func_(func) {
     fut_ = prom_.get_future().share();
   }
   template <typename... Futures>
-  Task(int id, Func& func, Futures&&... deps) : id_(id), func_(func) {
+  Task(int id, Func &func, Futures &&...deps) : id_(id), func_(func) {
     fut_ = prom_.get_future().share();
     (deps_.push_back(std::forward<Futures>(deps)), ...);
   }
@@ -35,9 +35,10 @@ public:
   std::shared_future<void> get_dependency() const { return fut_; }
 
   void operator()() {
-    sync_cout << "task " << id_ << ": waiting for "
-              << deps_.size() << " predecessor(s)\n";
-    for (auto& d : deps_) d.get();
+    sync_cout << "task " << id_ << ": waiting for " << deps_.size()
+              << " predecessor(s)\n";
+    for (auto &d : deps_)
+      d.get();
     sync_cout << "task " << id_ << ": running\n";
     func_();
     sync_cout << "task " << id_ << ": signalling completion\n";
@@ -45,16 +46,16 @@ public:
   }
 
 private:
-  int                                   id_;
-  Func&                                 func_;
-  std::promise<void>                    prom_;
-  std::shared_future<void>              fut_;
+  int id_;
+  Func &func_;
+  std::promise<void> prom_;
+  std::shared_future<void> fut_;
   std::vector<std::shared_future<void>> deps_;
 };
 
 int main() {
-  auto sleep1s = []{ std::this_thread::sleep_for(1s); };
-  auto sleep2s = []{ std::this_thread::sleep_for(2s); };
+  auto sleep1s = [] { std::this_thread::sleep_for(1s); };
+  auto sleep2s = [] { std::this_thread::sleep_for(2s); };
 
   Task task1(1, sleep1s);
   Task task2(2, sleep2s, task1.get_dependency());

@@ -1,5 +1,6 @@
 // 7x10-latch_barrier.cpp
-// std::latch as a one-shot barrier — the modern replacement for
+// ======================
+// std::latch as a one-shot barrier, the modern replacement for
 // std::promise<void> + std::future<void>::wait() when you only need a signal.
 // Requires C++20 (<latch>).
 
@@ -27,12 +28,12 @@ int main() {
   std::vector<std::jthread> workers;
   for (int i = 0; i < N; ++i) {
     workers.emplace_back([&, i] {
-      start.wait();         // park until released
+      start.wait(); // park until released
       do_work(i);
     });
   }
 
-  std::this_thread::sleep_for(100ms);   // simulate setup
+  std::this_thread::sleep_for(100ms); // simulate setup
   sync_cout << "releasing all workers\n";
-  start.count_down();                    // release every waiter at once
+  start.count_down(); // release every waiter at once
 }

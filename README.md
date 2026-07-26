@@ -98,23 +98,49 @@ gh workflow run CI
 
 Or use the **Actions** tab > **CI** > **Run workflow** button on GitHub.
 
-## Optional examples
+## The std::execution examples
 
-`3x19-cpp26_std_execution.cpp` requires the [NVIDIA stdexec](https://github.com/NVIDIA/stdexec)
-reference implementation of P2300 and a C++26-capable toolchain. It is excluded
-from the default build.
-
-### Build via CMake (recommended)
-
-Enable the `BUILD_STDEXEC_EXAMPLES` option — CMake will fetch stdexec automatically:
+`3x19-cpp26_std_execution.cpp` and **every example in `Chapter12/`** require the
+[NVIDIA stdexec](https://github.com/NVIDIA/stdexec) reference implementation of
+P2300. They are built by default, no flags needed:
 
 ```bash
-cmake --preset release-clang -DBUILD_STDEXEC_EXAMPLES=ON
+cmake --preset release-clang
 cmake --build --preset release-clang
 ```
 
-The first configure pulls stdexec from GitHub via `FetchContent`, so an internet
-connection is required.
+The first configure downloads stdexec from GitHub via `FetchContent`, pinned to
+the commit in `STDEXEC_GIT_TAG` (the single source of truth for the version
+these examples were validated against, CI uses the same value). An internet
+connection is therefore required the first time.
+
+### Using a local stdexec checkout
+
+To build against an already existing checkout, point `STDEXEC_INCLUDE_DIR` at its
+`include/` directory. That takes priority and no download occurs:
+
+```bash
+git clone https://github.com/NVIDIA/stdexec.git
+cmake --preset release-clang \
+    -DSTDEXEC_INCLUDE_DIR=$PWD/stdexec/include \
+    -DSTDEXEC_SRC_DIR=$PWD/stdexec/src
+```
+
+`STDEXEC_SRC_DIR` (stdexec's `src/` directory) is needed only for
+`12x04-parallel_scheduler`. Without it, that one example is skipped.
+
+### Building offline
+
+Configure with `-DFETCH_STDEXEC=OFF`. The rest of the project builds normally
+and every `std::execution` example is skipped, with a `STATUS` line saying so.
+
+> **Note on `12x04-parallel_scheduler`.** `get_parallel_scheduler()` needs
+> stdexec's default backend, which lives in
+> `src/parallel_scheduler/parallel_scheduler.cpp`. That translation unit is
+> compiled directly into the executable rather than linked as a library: the
+> backend registers itself through a static initializer, so a static-library
+> link lets the linker discard the object file and the program segfaults at
+> run time.
 
 > **Note on the C++ standard flag.** The rest of the project builds at C++23,
 > set globally in the root `CMakeLists.txt`. The 3x19 target overrides this by

@@ -50,46 +50,36 @@ jobs:
       - name: Print compiler version
         run: ${{ matrix.compiler }} --version
 
+      # FetchContent stores stdexec under <binaryDir>/_deps.
+      # Caching this directory keeps CI fast across runs.
+      # The key invalidates whenever CMakeLists.txt changes
+      # which is where STDEXEC_GIT_TAG lives.
+      - name: Cache stdexec FetchContent
+        uses: actions/cache@v4
+        with:
+          path: .build/${{ matrix.preset }}/_deps
+          key: stdexec-${{ runner.os }}-${{ matrix.preset }}-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            stdexec-${{ runner.os }}-${{ matrix.preset }}-
+
       - name: Configure
         run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
 
-  stdexec:
-    name: stdexec-examples (clang-18)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install build tools
+      # The std::execution chapters are skipped rather than failed when stdexec
+      # is missing, so a silent skip would otherwise leave CI green with nothing
+      # built. Assert the binaries actually exist.
+      - name: Verify std::execution examples were built
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build
-
-      - name: Set up Clang 18
-        run: |
-          if ! apt-cache show clang-18 > /dev/null 2>&1; then
-            wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
-          else
-            sudo apt-get install -y clang-18
-          fi
-          sudo update-alternatives --install /usr/bin/clang   clang   /usr/bin/clang-18   100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100
-
-      # FetchContent stores stdexec under <binaryDir>/_deps. Caching this
-      # directory keeps CI fast across runs; the key invalidates whenever a
-      # CMakeLists.txt changes (which is where GIT_TAG lives).
-      - name: Cache stdexec FetchContent
-        uses: actions/cache@v4
-        with:
-          path: .build/release-clang/_deps
-          key: stdexec-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt') }}
-          restore-keys: |
-            stdexec-${{ runner.os }}-
-
-      - name: Configure
-        run: cmake --preset release-clang -DBUILD_STDEXEC_EXAMPLES=ON
-
-      - name: Build
-        run: cmake --build --preset release-clang
+          set -euo pipefail
+          missing=0
+          for f in bin/Chapter03/3x19-cpp26_std_execution \
+                   bin/Chapter12/12x0{1,2,3,4,5,6,7,8,9}-*; do
+            if ! compgen -G "$f" > /dev/null; then
+              echo "MISSING: $f"; missing=1
+            fi
+          done
+          test "$missing" -eq 0
+          echo "Chapter12 binaries: $(ls bin/Chapter12 | wc -l)"
