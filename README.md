@@ -4,9 +4,14 @@ Source code examples for the book published by Packt Publishing.
 
 ## Requirements
 
-- **Compiler**: GCC 13+ or Clang 16+ with C++23 support
+- **Compiler**: GCC 13+ or Clang 16+ with C++23 support for most chapters.
+  **Chapters 12 and 13 need GCC 14+ or Clang 18+**, because every example in
+  them uses `<print>`, which reached libstdc++ in GCC 14.
 - **Build system**: CMake 3.25+, Ninja (recommended)
 - **OS**: Linux (tested on Ubuntu 24.04)
+- **GPU (optional)**: the two Chapter 13 `.cu` examples need an NVIDIA GPU of
+  **compute capability 6.0 or newer** (Pascal, 2016, or later). See
+  *GPU examples (Chapter 13, nvexec)* below.
 
 ## Project structure
 
@@ -100,7 +105,8 @@ Or use the **Actions** tab > **CI** > **Run workflow** button on GitHub.
 
 ## The std::execution examples
 
-`3x19-cpp26_std_execution.cpp` and **every example in `Chapter12/`** require the
+`3x19-cpp26_std_execution.cpp` and **every example in `Chapter12/` and
+`Chapter13/`** require the
 [NVIDIA stdexec](https://github.com/NVIDIA/stdexec) reference implementation of
 P2300. They are built by default, no flags needed:
 
@@ -156,3 +162,57 @@ and every `std::execution` example is skipped, with a `STATUS` line saying so.
 clang++ -std=c++26 -I<path-to-stdexec>/include \
     Chapter03/3x19-cpp26_std_execution.cpp -o bin/Chapter03/3x19-cpp26_std_execution
 ```
+
+The Chapter 12 and 13 examples compile the same way at `-std=c++23`, since
+stdexec is a library that provides the C++26 feature:
+
+```bash
+g++ -std=c++23 -I<path-to-stdexec>/include \
+    Chapter13/13x01-motivating_pipeline.cpp -o bin/Chapter13/13x01-motivating_pipeline
+```
+
+### GPU examples (Chapter 13, nvexec)
+
+`Chapter13/13x16-gpu_map_reduce.cu` and `Chapter13/13x17-multi_gpu_map_reduce.cu`
+run sender pipelines on the GPU through stdexec's `nvexec` schedulers. They are
+**off by default and never built by CI**, since no hosted runner has an NVIDIA
+GPU. They require all of the following:
+
+- **NVIDIA HPC SDK (`nvc++` 25.9+)**: not on apt. Download it from
+  <https://developer.nvidia.com/hpc-sdk> and add its `compilers/bin` to `PATH`.
+- **An NVIDIA GPU of compute capability 6.0 or newer** (Pascal, 2016, or later).
+  This is a hard floor. `-stdpar` refuses anything older, with
+  `nvc++-Fatal-The -stdpar option is available only on systems with NVIDIA GPUs
+  with compute capability '>= cc60`. A Maxwell card such as a GTX 900 series
+  (cc5.2) cannot build these examples at all, even to check that they compile.
+- **A CUDA toolkit matching the installed driver**: `nvc++` rejects a bundled
+  toolkit newer than the driver supports. Check the driver's CUDA version with
+  `nvidia-smi` and the bundled toolkits with `ls $NVHPC_ROOT/cuda`.
+- **Two or more GPUs** for `13x17` only, plus managed-memory support.
+
+Enable them with `ENABLE_NVEXEC_GPU` and a GPU-capable compiler:
+
+```bash
+cmake --preset debug \
+    -DCMAKE_CXX_COMPILER=nvc++ \
+    -DENABLE_NVEXEC_GPU=ON \
+    -DSTDEXEC_INCLUDE_DIR=/path/to/stdexec/include
+cmake --build --preset debug
+```
+
+The CMake build passes `-stdpar=gpu` when it detects `nvc++`. To build one by
+hand:
+
+```bash
+nvc++ -std=c++23 -stdpar=gpu -I<path-to-stdexec>/include \
+    Chapter13/13x16-gpu_map_reduce.cu -o bin/Chapter13/13x16-gpu_map_reduce
+```
+
+> **Known issue.** `nvc++` 26.5 cannot compile the stdexec commit pinned in the
+> root `CMakeLists.txt`. Even a minimal translation unit containing only
+> `#include <stdexec/execution.hpp>` and `namespace ex = stdexec;` fails with
+> `error: name must be a namespace name`. The problem is an incompatibility
+> between `nvc++` and stdexec, not the examples, which compile cleanly under
+> GCC 14/15 and Clang 18/19. If you hit it, try an older `nvc++` or an older
+> stdexec commit. **These two examples are therefore the only ones in this
+> repository that have not been machine-verified.**
