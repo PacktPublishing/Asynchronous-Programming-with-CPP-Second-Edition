@@ -98,8 +98,15 @@ else()
         "stdexec not available — skipping the std::execution examples")
 endif()
 
+# The Chapter 13 GPU examples (nvexec, .cu files) need the NVIDIA HPC SDK
+# (nvc++) and a CUDA GPU, so they are off by default and never built by CI.
+# Enable with -DENABLE_NVEXEC_GPU=ON and a GPU-capable compiler (see README.md).
+option(ENABLE_NVEXEC_GPU
+    "Build the Chapter 13 GPU (nvexec) examples. Requires nvc++/CUDA and a GPU" OFF)
+
 # Add chapter subdirectories
 add_subdirectory(Chapter03)
 add_subdirectory(Chapter07)
 add_subdirectory(Chapter08)
 add_subdirectory(Chapter12)
+add_subdirectory(Chapter13)

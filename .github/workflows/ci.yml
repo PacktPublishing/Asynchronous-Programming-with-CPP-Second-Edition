@@ -76,10 +76,13 @@ jobs:
           set -euo pipefail
           missing=0
           for f in bin/Chapter03/3x19-cpp26_std_execution \
-                   bin/Chapter12/12x0{1,2,3,4,5,6,7,8,9}-*; do
+                   bin/Chapter12/12x0{1,2,3,4,5,6,7,8,9}-* \
+                   bin/Chapter13/13x0{1,2,3,4,5,6,7,8,9}-* \
+                   bin/Chapter13/13x1{0,1,2,3,4,5}-*; do
             if ! compgen -G "$f" > /dev/null; then
               echo "MISSING: $f"; missing=1
             fi
           done
           test "$missing" -eq 0
           echo "Chapter12 binaries: $(ls bin/Chapter12 | wc -l)"
+          echo "Chapter13 binaries: $(ls bin/Chapter13 | wc -l)"
