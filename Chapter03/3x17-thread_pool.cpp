@@ -7,7 +7,6 @@
 //   - Thread-safe task queue (std::queue + mutex)
 //   - condition_variable to wake sleeping workers when work arrives
 // BEST PRACTICE: size the pool to hardware_concurrency() or a measured optimum.
-//
 // Requires: C++20
 
 #include <condition_variable>
@@ -23,7 +22,7 @@
 #define sync_cout std::osyncstream(std::cout)
 
 class ThreadPool {
-public:
+   public:
     static constexpr std::size_t DEFAULT_NUM_THREADS = 4;
 
     explicit ThreadPool(std::size_t n = std::thread::hardware_concurrency()) {
@@ -35,9 +34,7 @@ public:
                     std::function<void()> task;
                     {
                         std::unique_lock lk(mu_);
-                        cv_.wait(lk, [&]{
-                            return !tasks_.empty() || st.stop_requested();
-                        });
+                        cv_.wait(lk, [&] { return !tasks_.empty() || st.stop_requested(); });
                         // Drain remaining tasks before exiting on a stop request
                         if (tasks_.empty()) return;
                         task = std::move(tasks_.front());
@@ -49,7 +46,10 @@ public:
     }
 
     void submit(std::function<void()> f) {
-        { std::lock_guard lk(mu_); tasks_.push(std::move(f)); }
+        {
+            std::lock_guard lk(mu_);
+            tasks_.push(std::move(f));
+        }
         cv_.notify_one();
     }
 
@@ -58,25 +58,28 @@ public:
         // re-evaluates and sees st.stop_requested(). Without notify_all() the
         // workers would block forever in cv_.wait() — std::condition_variable
         // does not react to stop_token by itself.
-        for (auto& w : workers_) w.request_stop();
+        {
+            std::lock_guard lk(mu_);  // no worker can miss the wake-up
+            for (auto &w : workers_) w.request_stop();
+        }
         cv_.notify_all();
-        // Members destroyed in reverse declaration order: workers_ last,
-        // so each jthread joins after the wake-up.
+        // Members destroyed in reverse declaration order: workers_ first, so
+        // each jthread joins while the queue, mutex and condition variable it
+        // uses are still alive.
     }
 
-private:
-    std::vector<std::jthread>         workers_;
+   private:
     std::queue<std::function<void()>> tasks_;
-    std::mutex                        mu_;
-    std::condition_variable           cv_;
+    std::mutex mu_;
+    std::condition_variable cv_;
+    std::vector<std::jthread> workers_;
 };
 
 int main() {
     ThreadPool pool(4);
 
     for (int i = 0; i < 10; ++i)
-        pool.submit([i]{ sync_cout << "task " << i << " on thread "
-                                   << std::this_thread::get_id() << "\n"; });
+        pool.submit([i] { sync_cout << "task " << i << " on thread " << std::this_thread::get_id() << "\n"; });
 
     // pool destructor: workers finish their current task, then stop and join
 }

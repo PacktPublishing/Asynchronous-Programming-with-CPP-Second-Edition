@@ -4,7 +4,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../bin/Chapter07)
 # Collect all .cpp files
 file(GLOB SOURCES "*.cpp")
 
-# Files that require special handling (built externally, not by the default target)
+# Files that need the NVIDIA stdexec reference implementation. They are built
+# like any other example when stdexec is available (which is the default, since
+# the root CMakeLists.txt fetches it) and skipped only when it is not.
 set(STDEXEC_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/7x17-senders_dag.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/7x18-bridging_thread.cpp
@@ -16,12 +18,20 @@ set(CPP23_SOURCES
 )
 
 foreach(SOURCE ${SOURCES})
-    # Skip stdexec examples — they require NVIDIA stdexec and are built by hand.
+    get_filename_component(EXEC_NAME ${SOURCE} NAME_WE)
+
     if(SOURCE IN_LIST STDEXEC_SOURCES)
+        if(NOT STDEXEC_FOUND)
+            message(STATUS
+                "Chapter07: stdexec not available — skipping ${EXEC_NAME}")
+            continue()
+        endif()
+        add_executable(${EXEC_NAME} ${SOURCE})
+        target_compile_features(${EXEC_NAME} PRIVATE cxx_std_23)
+        target_link_libraries(${EXEC_NAME} PRIVATE STDEXEC::stdexec)
         continue()
     endif()
 
-    get_filename_component(EXEC_NAME ${SOURCE} NAME_WE)
     add_executable(${EXEC_NAME} ${SOURCE})
     target_link_libraries(${EXEC_NAME} PRIVATE Threads::Threads)
 

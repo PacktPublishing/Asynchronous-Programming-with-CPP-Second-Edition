@@ -1,4 +1,5 @@
 // 13x12-futures_migration.cpp
+// ===========================
 // The same computation two ways: the classic eager future model, and the lazy
 // sender model. std::async launches immediately and future.get() blocks;
 // schedule|then builds a lazy description that runs once at sync_wait.
@@ -10,11 +11,10 @@
 // `cmake --preset debug && cmake --build --preset debug` builds this file
 // (see the root CMakeLists.txt and README.md).
 
+#include <exec/static_thread_pool.hpp>
 #include <future>
 #include <print>
-
 #include <stdexec/execution.hpp>
-#include <exec/static_thread_pool.hpp>
 
 namespace ex = stdexec;
 
@@ -25,8 +25,7 @@ int main() {
 
     // Sender model: lazy description, run once at the edge.
     exec::static_thread_pool pool{2};
-    ex::sender auto work =
-        ex::schedule(pool.get_scheduler()) | ex::then([] { return 20 + 22; });
+    ex::sender auto work = ex::schedule(pool.get_scheduler()) | ex::then([] { return 20 + 22; });
     auto [n] = ex::sync_wait(std::move(work)).value();
     std::println("sync_wait     = {}", n);
 }

@@ -5,7 +5,6 @@
 // by the OS when the thread finishes or the process exits.
 // WARNING: if a detached thread accesses objects destroyed before it finishes,
 //          the result is undefined behaviour. Prefer jthread + stop_token.
-//
 // Requires: C++20
 
 #include <chrono>

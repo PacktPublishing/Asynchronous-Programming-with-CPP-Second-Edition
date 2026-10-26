@@ -8,40 +8,40 @@
 //   Repository: https://github.com/NVIDIA/stdexec
 //
 // Build:
-//   clang++ -std=c++26 -I<path-to-stdexec>/include 7x17-senders_dag.cpp
+//   clang++ -std=c++23 -I<path-to-stdexec>/include 7x17-senders_dag.cpp
 //
-// This file is excluded from the default CMake build (see CMakeLists.txt).
+// Built by default when stdexec is available (see CMakeLists.txt).
 
 #include <chrono>
+#include <exec/split.hpp>
+#include <exec/static_thread_pool.hpp>
 #include <iostream>
+#include <stdexec/execution.hpp>
 #include <syncstream>
 #include <thread>
-
-#include <exec/static_thread_pool.hpp>
-#include <stdexec/execution.hpp>
 
 using namespace std::chrono_literals;
 namespace ex = stdexec;
 #define sync_cout std::osyncstream(std::cout)
 
 int main() {
-  exec::static_thread_pool pool(8);
-  auto sched = pool.get_scheduler();
+    exec::static_thread_pool pool(8);
+    auto sched = pool.get_scheduler();
 
-  auto sleep1s = [] { std::this_thread::sleep_for(1s); };
-  auto sleep2s = [] { std::this_thread::sleep_for(2s); };
+    auto sleep1s = [] { std::this_thread::sleep_for(1s); };
+    auto sleep2s = [] { std::this_thread::sleep_for(2s); };
 
-  // Build the DAG with split() so task2's completion can fan out to two
-  // downstream operations (task3 and task4) without re-running task2.
-  auto task1 = ex::schedule(sched) | ex::then(sleep1s);
-  auto task2 =
-      ex::starts_on(sched, std::move(task1)) | ex::then(sleep2s) | ex::split();
-  auto task3 = ex::starts_on(sched, task2) | ex::then(sleep1s);
-  auto task4 = ex::starts_on(sched, task2) | ex::then(sleep2s);
-  auto task5 = ex::when_all(std::move(task3), std::move(task4)) |
-               ex::then([] { std::this_thread::sleep_for(2s); });
+    // Build the DAG with split() so task2's completion can fan out to two
+    // downstream operations (task3 and task4) without re-running task2.
+    // split() was voted out of C++26 by P3682, so it is exec::split here, a
+    // stdexec extension rather than a standard adaptor.
+    auto task1 = ex::schedule(sched) | ex::then(sleep1s);
+    auto task2 = ex::starts_on(sched, std::move(task1)) | ex::then(sleep2s) | exec::split();
+    auto task3 = ex::starts_on(sched, task2) | ex::then(sleep1s);
+    auto task4 = ex::starts_on(sched, task2) | ex::then(sleep2s);
+    auto task5 = ex::when_all(std::move(task3), std::move(task4)) | ex::then([] { std::this_thread::sleep_for(2s); });
 
-  sync_cout << "DAG starting\n";
-  ex::sync_wait(std::move(task5));
-  sync_cout << "All done!\n";
+    sync_cout << "DAG starting\n";
+    ex::sync_wait(std::move(task5));
+    sync_cout << "All done!\n";
 }

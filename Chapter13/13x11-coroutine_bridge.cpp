@@ -1,8 +1,9 @@
 // 13x11-coroutine_bridge.cpp
-// Senders and coroutines are interchangeable. Inside an exec::task a sender is
+// ==========================
+// Senders and coroutines are interchangeable. Inside an ex::task a sender is
 // awaitable: co_await suspends, the sender runs, and its value becomes the
-// result of the co_await. exec::task is itself a sender, so it composes with
-// the pipe algebra.
+// result of the co_await. ex::task (std::execution::task) is itself a sender,
+// so it composes with the pipe algebra.
 //
 // The custom sender from 13x09 is repeated here to show that it needs no extra
 // work to be awaitable: satisfying the sender concept is the whole requirement,
@@ -16,20 +17,18 @@
 // (see the root CMakeLists.txt and README.md).
 
 #include <exception>
+#include <exec/static_thread_pool.hpp>
 #include <print>
+#include <stdexec/execution.hpp>
 #include <type_traits>
 #include <utility>
-
-#include <stdexec/execution.hpp>
-#include <exec/static_thread_pool.hpp>
-#include <exec/task.hpp>
 
 namespace ex = stdexec;
 
 // The custom sender of 13x09, unchanged.
 template <class F, class Receiver>
 struct value_operation {
-    F        func;
+    F func;
     Receiver rcvr;
 
     void start() & noexcept {
@@ -45,9 +44,8 @@ template <class F>
 struct value_sender {
     using sender_concept = ex::sender_t;
 
-    using completion_signatures = ex::completion_signatures<
-        ex::set_value_t(std::invoke_result_t<F&>),
-        ex::set_error_t(std::exception_ptr)>;
+    using completion_signatures =
+        ex::completion_signatures<ex::set_value_t(std::invoke_result_t<F&>), ex::set_error_t(std::exception_ptr)>;
 
     F func;
 
@@ -58,22 +56,25 @@ struct value_sender {
 };
 
 template <class F>
-value_sender<F> run_and_value(F f) { return {std::move(f)}; }
+value_sender<F> run_and_value(F f) {
+    return {std::move(f)};
+}
 
-exec::task<int> pipeline_in_a_coroutine(ex::scheduler auto sched) {
-    co_await ex::schedule(sched);         // hop onto the pool
-    int a = co_await run_and_value([] {   // await our custom sender
+ex::task<int> pipeline_in_a_coroutine() {
+    int a = co_await run_and_value([] {  // await our custom sender
         return 20;
     });
-    int b = co_await ex::just(22);        // await a factory
-    co_return a + b;                      // == 42
+    int b = co_await ex::just(22);  // await a factory
+    co_return a + b;                // == 42
 }
 
 int main() {
     exec::static_thread_pool pool{4};
     ex::scheduler auto sched = pool.get_scheduler();
 
-    // exec::task is a sender, so it drops straight into sync_wait or a chain.
-    auto [result] = ex::sync_wait(pipeline_in_a_coroutine(sched)).value();
+    // ex::task is a sender, so it drops straight into sync_wait or a chain.
+    // starts_on runs the whole task on the pool, and after every co_await the
+    // task resumes on the pool again (scheduler affinity).
+    auto [result] = ex::sync_wait(ex::starts_on(sched, pipeline_in_a_coroutine())).value();
     std::println("coroutine pipeline returned {}", result);
 }

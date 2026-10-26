@@ -1,4 +1,5 @@
 // 13x10-custom_adaptor.cpp
+// ========================
 // A custom adaptor is a sender that wraps another sender, connecting it to a
 // receiver of its own making that intercepts the completion signals. This
 // minimal then-like adaptor transforms the value channel and forwards error,
@@ -13,8 +14,9 @@
 // function returning double and this still compiles, but the result is
 // truncated to int with no diagnostic, because the signatures a sender
 // declares are simply believed. A generic adaptor computes its signatures from
-// the wrapped sender instead. P2300 specifies transform_completion_signatures_of
-// for that, although stdexec currently exposes it only as an internal detail.
+// the wrapped sender instead: C++26 asks a sender for its signatures through a
+// static consteval get_completion_signatures<Self, Env...>() member, and
+// stdexec's exec::transform_completion_signatures maps the child's list.
 //
 // PREVIEW: C++26 std::execution (P2300). Requires NVIDIA stdexec.
 //   g++ -std=c++23 -I<path-to-stdexec>/include 13x10-custom_adaptor.cpp
@@ -25,9 +27,8 @@
 
 #include <exception>
 #include <print>
-#include <utility>
-
 #include <stdexec/execution.hpp>
+#include <utility>
 
 namespace ex = stdexec;
 
@@ -35,7 +36,7 @@ namespace ex = stdexec;
 template <class F, class Receiver>
 struct then_receiver {
     using receiver_concept = ex::receiver_t;
-    F        func;
+    F func;
     Receiver rcvr;
 
     template <class... Values>
@@ -61,9 +62,7 @@ struct then_operation {
     ex::connect_result_t<Sender, then_receiver<F, Receiver>> inner_op;
 
     then_operation(Sender&& sndr, F f, Receiver rcvr)
-        : inner_op(ex::connect(std::move(sndr),
-                               then_receiver<F, Receiver>{std::move(f),
-                                                          std::move(rcvr)})) {}
+        : inner_op(ex::connect(std::move(sndr), then_receiver<F, Receiver>{std::move(f), std::move(rcvr)})) {}
 
     void start() & noexcept { ex::start(inner_op); }
 };
@@ -71,13 +70,11 @@ struct then_operation {
 template <class Sender, class F>
 struct then_sender {
     using sender_concept = ex::sender_t;
-    using completion_signatures = ex::completion_signatures<
-        ex::set_value_t(int),
-        ex::set_error_t(std::exception_ptr),
-        ex::set_stopped_t()>;
+    using completion_signatures =
+        ex::completion_signatures<ex::set_value_t(int), ex::set_error_t(std::exception_ptr), ex::set_stopped_t()>;
 
     Sender sndr;
-    F      func;
+    F func;
 
     template <class Receiver>
     then_operation<Sender, F, Receiver> connect(Receiver rcvr) && {
@@ -91,8 +88,6 @@ then_sender<Sender, F> my_then(Sender s, F f) {
 }
 
 int main() {
-    auto [n] = ex::sync_wait(
-        my_then(ex::just(21), [](int x) { return x * 2; })
-    ).value();
-    std::println("custom adaptor produced {}", n);   // 42
+    auto [n] = ex::sync_wait(my_then(ex::just(21), [](int x) { return x * 2; })).value();
+    std::println("custom adaptor produced {}", n);  // 42
 }

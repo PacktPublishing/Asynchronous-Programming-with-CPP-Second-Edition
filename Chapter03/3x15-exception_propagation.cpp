@@ -5,7 +5,6 @@
 // std::current_exception() to capture and std::rethrow_exception() to re-throw.
 // BEST PRACTICE: prefer std::promise/std::future (Chapter 7) which handle
 // this boilerplate automatically.
-//
 // Requires: C++11
 
 #include <exception>
@@ -16,12 +15,10 @@
 std::exception_ptr g_exception;
 std::mutex g_exc_mutex;
 
-void risky_operation() {
-    throw std::runtime_error("error inside worker thread");
-}
+void risky_operation() { throw std::runtime_error("error inside worker thread"); }
 
 int main() {
-    std::thread worker([&]{
+    std::thread worker([&] {
         try {
             risky_operation();
         } catch (...) {

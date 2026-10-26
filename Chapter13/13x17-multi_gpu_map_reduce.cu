@@ -1,4 +1,5 @@
 // 13x17-multi_gpu_map_reduce.cu
+// =============================
 // The same pipeline again, now spread across every GPU in the machine. The only
 // change from 13x16 is the context type: nvexec::multi_gpu_stream_context in
 // place of nvexec::stream_context. Its scheduler partitions the bulk work over

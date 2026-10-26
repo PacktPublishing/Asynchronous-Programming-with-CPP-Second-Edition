@@ -11,7 +11,7 @@
 // Requires: C++23
 
 #include <condition_variable>
-#include <functional>   // std::move_only_function (C++23)
+#include <functional>  // std::move_only_function (C++23)
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -31,9 +31,7 @@ void demo_cva_stop_token() {
     std::jthread worker([&](std::stop_token st) {
         std::unique_lock lk(mu);
         // Wait until data_ready OR a stop is requested — whichever comes first
-        bool notified = std::condition_variable_any{}.wait(
-            lk, st, [&]{ return data_ready; }
-        );
+        bool notified = std::condition_variable_any{}.wait(lk, st, [&] { return data_ready; });
         if (!notified)
             sync_cout << "cva demo: stopped before data arrived\n";
         else
@@ -48,11 +46,9 @@ void demo_cva_stop_token() {
 // --- Feature 2: std::move_only_function in a task queue ---
 
 class TaskQueue {
-public:
+   public:
     // move_only_function allows tasks that capture unique_ptr or other move-only types
-    void push(std::move_only_function<void()> f) {
-        tasks_.push(std::move(f));
-    }
+    void push(std::move_only_function<void()> f) { tasks_.push(std::move(f)); }
 
     void run_all() {
         while (!tasks_.empty()) {
@@ -61,7 +57,7 @@ public:
         }
     }
 
-private:
+   private:
     std::queue<std::move_only_function<void()>> tasks_;
 };
 
@@ -70,9 +66,7 @@ void demo_move_only_function() {
 
     // Task captures a unique_ptr — impossible with std::function
     auto data = std::make_unique<std::string>("move-only payload");
-    q.push([d = std::move(data)]{
-        sync_cout << "move_only_function task: " << *d << "\n";
-    });
+    q.push([d = std::move(data)] { sync_cout << "move_only_function task: " << *d << "\n"; });
 
     q.run_all();
 }

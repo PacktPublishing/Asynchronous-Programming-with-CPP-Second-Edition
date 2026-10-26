@@ -5,7 +5,6 @@
 //   - by reference via std::ref / std::cref
 //   - via lambda capture
 //   - move-only types via std::move
-//
 // Requires: C++11
 
 #include <functional>
@@ -19,23 +18,23 @@
 #define sync_cout std::osyncstream(std::cout)
 
 // Passing by value — function receives its own copies; no data races possible
-void process(std::string data, int count) {
-    sync_cout << "by value: data=\"" << data
-              << "\", count=" << count << "\n";
-}
+void process(std::string data, int count) { sync_cout << "by value: data=\"" << data << "\", count=" << count << "\n"; }
 
-// Passing by mutable reference — caller must ensure the object outlives the thread
-void append(std::string& s) { s += " world"; }
+// Passing by mutable reference — caller must ensure the object outlives the
+// thread
+void append(std::string &s) { s += " world"; }
 
 // Passing by const reference — read-only access
-void print_vec(const std::vector<int>& v) {
-    sync_cout << "by cref: vec size=" << v.size() << "\n";
-}
+void print_vec(const std::vector<int> &v) { sync_cout << "by cref: vec size=" << v.size() << "\n"; }
+
+// A heavy object we move into a thread rather than copy
+struct HeavyObject {
+    std::vector<int> data = std::vector<int>(1'000'000, 1);
+    void process() const { sync_cout << "HeavyObject processed " << data.size() << " elements\n"; }
+};
 
 // Move-only type — takes ownership inside the thread
-void consume(std::unique_ptr<std::string> p) {
-    sync_cout << "by move: *p=\"" << *p << "\"\n";
-}
+void consume(std::unique_ptr<std::string> p) { sync_cout << "by move: *p=\"" << *p << "\"\n"; }
 
 int main() {
     // By value: input is copied into the thread
@@ -56,7 +55,7 @@ int main() {
 
     // Via lambda capture — most idiomatic in modern C++
     int result = 0;
-    std::thread t4([&result]{ result = 42; });
+    std::thread t4([&result] { result = 42; });
     t4.join();
     sync_cout << "lambda capture result=" << result << "\n";
 
@@ -66,4 +65,13 @@ int main() {
     t5.join();
     // ptr is now empty
     sync_cout << "ptr after move: " << (ptr ? *ptr : "(empty)") << "\n";
+
+    // Moving objects into threads: an init-capture moves the object into the
+    // lambda, so the thread owns it.
+    {
+        auto ptr = std::make_unique<HeavyObject>();
+        std::thread t([p = std::move(ptr)] { p->process(); });
+        // ptr is now empty, the thread owns the object
+        t.join();
+    }
 }
