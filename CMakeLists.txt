@@ -20,13 +20,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
-# Clang (e.g. 18.x) reports __cpp_concepts == 201907L, but libstdc++'s <expected>
-# only enables std::expected when __cpp_concepts >= 202002L (see bits/version.h).
-# Advertise the final C++20 concepts value so std::expected becomes visible under
-# Clang. Redefining to the same value on a future Clang is harmless, the warning
-# is silenced. GCC is unaffected.
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-D__cpp_concepts=202002L -Wno-builtin-macro-redefined)
+# Clang 18 ships relaxed concepts (P2493) but does not bump __cpp_concepts to
+# 202002L, so libstdc++ 13/14 hides <expected> and other C++23 headers behind
+# that gate. Force the macro for Clang to unblock the standard library.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+   AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19)
+    add_compile_options(-Wno-builtin-macro-redefined -U__cpp_concepts -D__cpp_concepts=202002L)
 endif()
 
 # Optional sanitizer support
@@ -58,8 +57,11 @@ set(STDEXEC_INCLUDE_DIR "" CACHE PATH "Path to NVIDIA stdexec include/ directory
 set(STDEXEC_SRC_DIR "" CACHE PATH "Path to NVIDIA stdexec src/ directory")
 
 # Single source of truth for the stdexec commit these examples were validated
-# against (2026-07-05). Bump deliberately. CI derives its checkout from this.
-set(STDEXEC_GIT_TAG "e8c349f3f3425b9341306bc56615fc5279a15cf4"
+# against (2026-10-26). Bump deliberately. CI derives its checkout from this.
+# This commit provides the C++26 spellings the examples now use: ex::task,
+# ex::counting_scope with ex::spawn/spawn_future/associate, and
+# ex::get_parallel_scheduler().
+set(STDEXEC_GIT_TAG "653aca18556b3c57a40dabe01f7a45d807cef650"
     CACHE STRING "NVIDIA stdexec commit to fetch when STDEXEC_INCLUDE_DIR is unset")
 
 option(FETCH_STDEXEC

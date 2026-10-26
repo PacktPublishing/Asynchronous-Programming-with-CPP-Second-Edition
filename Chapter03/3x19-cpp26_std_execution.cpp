@@ -14,14 +14,14 @@
 //   - Structural cancellation: stop tokens flow through the sender graph
 //   - Swappable scheduler: change the execution resource without changing work
 //
-// Build with: clang++ -std=c++26 -I<path-to-stdexec>/include 3x19-cpp26_std_execution.cpp
+// Built by default when stdexec is available (see CMakeLists.txt). By hand:
+// clang++ -std=c++23 -I<path-to-stdexec>/include 3x19-cpp26_std_execution.cpp
 // Repository: https://github.com/NVIDIA/stdexec
-//
 // Requires: stdexec reference implementation (P2300), C++23/26 compiler
 
-#include <stdexec/execution.hpp>
 #include <exec/static_thread_pool.hpp>
 #include <iostream>
+#include <stdexec/execution.hpp>
 
 int compute_result() { return 42; }
 
@@ -31,8 +31,7 @@ int main() {
     auto sched = pool.get_scheduler();
 
     // Describe the work as a sender pipeline — no execution yet
-    auto work = stdexec::schedule(sched)
-              | stdexec::then([]{ return compute_result(); });
+    auto work = stdexec::schedule(sched) | stdexec::then([] { return compute_result(); });
 
     // Execute synchronously and retrieve the result
     auto [result] = stdexec::sync_wait(std::move(work)).value();

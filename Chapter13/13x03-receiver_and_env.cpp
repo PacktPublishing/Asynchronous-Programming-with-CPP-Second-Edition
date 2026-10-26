@@ -1,4 +1,5 @@
 // 13x03-receiver_and_env.cpp
+// ==========================
 // The receiver contract in full. A receiver is any object completed through the
 // three customization points that also exposes an environment. The environment
 // carries the ambient queries (stop token, scheduler) that senders read with
@@ -17,10 +18,9 @@
 // (see the root CMakeLists.txt and README.md).
 
 #include <exception>
-#include <print>
-
-#include <stdexec/execution.hpp>
 #include <exec/static_thread_pool.hpp>
+#include <print>
+#include <stdexec/execution.hpp>
 
 namespace ex = stdexec;
 
@@ -30,18 +30,12 @@ namespace contract {
 struct my_receiver {
     using receiver_concept = ex::receiver_t;
 
-    void set_value(int value) && noexcept {
-        std::println("got {}", value);
-    }
-    void set_error(std::exception_ptr) && noexcept {
-        std::println("failed");
-    }
-    void set_stopped() && noexcept {
-        std::println("stopped");
-    }
+    void set_value(int value) && noexcept { std::println("got {}", value); }
+    void set_error(std::exception_ptr) && noexcept { std::println("failed"); }
+    void set_stopped() && noexcept { std::println("stopped"); }
 };
 
-}   // namespace contract
+}  // namespace contract
 
 // A receiver that also answers ambient queries through its environment.
 namespace with_env {
@@ -52,7 +46,7 @@ struct my_env {
 
     // One overload per query this environment answers.
     auto query(ex::get_stop_token_t) const noexcept { return token; }
-    auto query(ex::get_scheduler_t)  const noexcept { return sched; }
+    auto query(ex::get_scheduler_t) const noexcept { return sched; }
 };
 
 struct my_receiver {
@@ -67,7 +61,7 @@ struct my_receiver {
     void set_stopped() && noexcept { std::println("env receiver: set_stopped"); }
 };
 
-}   // namespace with_env
+}  // namespace with_env
 
 int main() {
     // 1. The contract, exercised by hand: connect a sender to a receiver and
@@ -82,27 +76,23 @@ int main() {
     ex::inplace_stop_source source;
     with_env::my_env env{source.get_token(), pool.get_scheduler()};
 
-    auto env_op = ex::connect(
-          ex::read_env(ex::get_scheduler)
-        | ex::then([](ex::scheduler auto) { std::println("read the ambient scheduler"); }),
-        with_env::my_receiver{env});
+    auto env_op = ex::connect(ex::read_env(ex::get_scheduler) |
+                                  ex::then([](ex::scheduler auto) { std::println("read the ambient scheduler"); }),
+                              with_env::my_receiver{env});
     ex::start(env_op);
 
     // 3. The same query inside a consumed pipeline: sync_wait installs its own
     //    environment, which answers get_stop_token with a never_stop_token.
     ex::sender auto reads_token =
-          ex::read_env(ex::get_stop_token)
-        | ex::then([](auto token) { return token.stop_requested(); });
+        ex::read_env(ex::get_stop_token) | ex::then([](auto token) { return token.stop_requested(); });
 
     auto [requested] = ex::sync_wait(std::move(reads_token)).value();
     std::println("stop requested at start? {}", requested);
 
     // 4. Reading the ambient scheduler and scheduling follow-up work onto it.
     ex::sender auto reads_sched =
-          ex::starts_on(pool.get_scheduler(), ex::read_env(ex::get_scheduler))
-        | ex::let_value([](ex::scheduler auto sc) {
-              return ex::schedule(sc) | ex::then([] { return 7; });
-          });
+        ex::starts_on(pool.get_scheduler(), ex::read_env(ex::get_scheduler)) |
+        ex::let_value([](ex::scheduler auto sc) { return ex::schedule(sc) | ex::then([] { return 7; }); });
 
     auto [n] = ex::sync_wait(std::move(reads_sched)).value();
     std::println("work on ambient scheduler returned {}", n);

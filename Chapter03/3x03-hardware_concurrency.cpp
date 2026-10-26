@@ -2,7 +2,6 @@
 // =============================
 // Querying the number of logical CPU cores with hardware_concurrency().
 // Returns a hint that may be 0 when undetermined — always guard against it.
-//
 // Requires: C++11
 
 #include <iostream>

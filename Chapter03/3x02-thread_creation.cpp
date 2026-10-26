@@ -3,7 +3,6 @@
 // Six ways to construct a std::thread: free function, stored lambda,
 // embedded lambda, function object, non-static member function,
 // and static member function.
-//
 // Requires: C++11
 
 #include <iostream>
@@ -13,9 +12,7 @@
 #define sync_cout std::osyncstream(std::cout)
 
 // Free function
-void task() {
-    sync_cout << "Using free function\n";
-}
+void task() { sync_cout << "Using free function\n"; }
 
 // Function object — operator() overload
 struct Worker {
@@ -24,7 +21,7 @@ struct Worker {
 
 // Member functions
 struct Service {
-    void run()        { sync_cout << "Using non-static member function\n"; }
+    void run() { sync_cout << "Using non-static member function\n"; }
     static void run_static() { sync_cout << "Using static member function\n"; }
 };
 
@@ -33,11 +30,11 @@ int main() {
     std::thread t1(task);
 
     // t2: lambda stored in a variable
-    auto lambda = []{ sync_cout << "Using stored lambda\n"; };
+    auto lambda = [] { sync_cout << "Using stored lambda\n"; };
     std::thread t2(lambda);
 
     // t3: embedded lambda (most common in modern C++)
-    std::thread t3([]{ sync_cout << "Using embedded lambda\n"; });
+    std::thread t3([] { sync_cout << "Using embedded lambda\n"; });
 
     // t4: function object — brace-init avoids the most vexing parse
     std::thread t4{Worker{}};
@@ -49,6 +46,10 @@ int main() {
     // t6: static member function
     std::thread t6(&Service::run_static);
 
-    t1.join(); t2.join(); t3.join();
-    t4.join(); t5.join(); t6.join();
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+    t5.join();
+    t6.join();
 }

@@ -3,7 +3,6 @@
 // std::jthread (C++20): RAII joining thread.
 // - Joins automatically in its destructor (even if an exception is thrown).
 // - Multiple jthreads are destroyed in reverse construction order (LIFO).
-//
 // Requires: C++20
 
 #include <chrono>
@@ -17,18 +16,16 @@ using namespace std::chrono_literals;
 
 // Wrapper that logs construction and destruction to show LIFO ordering
 class JthreadWrapper {
-public:
-    JthreadWrapper(const std::function<void(const std::string&)>& func,
-                   const std::string& name)
+   public:
+    JthreadWrapper(const std::function<void(const std::string&)>& func, const std::string& name)
         : t_(func, name), name_(name) {
         sync_cout << "Thread " << name_ << " being created\n";
     }
-    ~JthreadWrapper() {
-        sync_cout << "Thread " << name_ << " being destroyed\n";
-    }
-private:
+    ~JthreadWrapper() { sync_cout << "Thread " << name_ << " being destroyed\n"; }
+
+   private:
     std::jthread t_;
-    std::string  name_;
+    std::string name_;
 };
 
 void worker(const std::string& name) {
@@ -40,7 +37,7 @@ void worker(const std::string& name) {
 int main() {
     // Basic jthread: no explicit join() needed
     {
-        std::jthread t([]{ std::this_thread::sleep_for(100ms); });
+        std::jthread t([] { std::this_thread::sleep_for(100ms); });
         sync_cout << "jthread ID: " << t.get_id() << "\n";
     }  // destructor joins here automatically
 

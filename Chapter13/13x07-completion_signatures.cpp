@@ -1,4 +1,5 @@
 // 13x07-completion_signatures.cpp
+// ===============================
 // Every sender advertises, at compile time, how it can complete. The value type
 // propagates through each adaptor, which is how sync_wait knows the tuple type
 // to return and how the compiler verifies a pipeline is internally consistent.
@@ -13,10 +14,9 @@
 #include <concepts>
 #include <exception>
 #include <print>
+#include <stdexec/execution.hpp>
 #include <tuple>
 #include <type_traits>
-
-#include <stdexec/execution.hpp>
 
 namespace ex = stdexec;
 
@@ -27,10 +27,9 @@ int main() {
 
     // The advertised list is a type we can name and assert on. This is the
     // description the compiler propagates through every adaptor.
-    static_assert(std::same_as<
-        ex::completion_signatures_of_t<decltype(s), ex::env<>>,
-        ex::completion_signatures<ex::set_value_t(double),
-                                  ex::set_error_t(std::exception_ptr)>>);
+    static_assert(
+        std::same_as<ex::completion_signatures_of_t<decltype(s), ex::env<>>,
+                     ex::completion_signatures<ex::set_value_t(double), ex::set_error_t(std::exception_ptr)>>);
 
     // The value type computed through the pipeline is double: sync_wait returns
     // std::optional<std::tuple<double>>. This is checked entirely at compile time.

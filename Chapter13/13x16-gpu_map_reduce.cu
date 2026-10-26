@@ -1,4 +1,5 @@
 // 13x16-gpu_map_reduce.cu
+// =======================
 // The SAME map-reduce as 13x14, retargeted to a GPU. The algorithm is
 // unchanged -- bulk maps a function over every element, then the results are
 // reduced. Only two things differ: the scheduler is nvexec::stream_scheduler

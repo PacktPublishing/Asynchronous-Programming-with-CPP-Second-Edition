@@ -1,4 +1,5 @@
 // 13x15-retry_backoff.cpp
+// =======================
 // Retry with exponential backoff. There is no standard retry adaptor, and a
 // recursive sender version fights the type system, so we express the control
 // flow as a coroutine: try, and on failure wait a growing delay (via the timed
@@ -14,12 +15,10 @@
 
 #include <atomic>
 #include <chrono>
+#include <exec/timed_thread_scheduler.hpp>
 #include <print>
 #include <stdexcept>
-
 #include <stdexec/execution.hpp>
-#include <exec/task.hpp>
-#include <exec/timed_thread_scheduler.hpp>
 
 namespace ex = stdexec;
 
@@ -33,7 +32,7 @@ int flaky_call() {
     return a * 10;
 }
 
-exec::task<int> with_retry(exec::timed_thread_scheduler timer, int max_retries) {
+ex::task<int> with_retry(exec::timed_thread_scheduler timer, int max_retries) {
     for (int i = 0;; ++i) {
         bool failed = false;
         try {
@@ -42,13 +41,13 @@ exec::task<int> with_retry(exec::timed_thread_scheduler timer, int max_retries) 
             co_return co_await (ex::just() | ex::then([] { return flaky_call(); }));
         } catch (const std::exception&) {
             if (i >= max_retries) {
-                throw;                       // give up: propagate the failure
+                throw;  // give up: propagate the failure
             }
             failed = true;
         }
         // co_await is not allowed inside a catch handler, so back off here.
         if (failed) {
-            auto delay = std::chrono::milliseconds(10 * (1 << i));   // 10, 20, 40, ...
+            auto delay = std::chrono::milliseconds(10 * (1 << i));  // 10, 20, 40, ...
             co_await exec::schedule_after(timer, delay);
         }
     }
@@ -57,8 +56,7 @@ exec::task<int> with_retry(exec::timed_thread_scheduler timer, int max_retries) 
 int main() {
     exec::timed_thread_context timer_ctx;
 
-    auto [result] =
-        ex::sync_wait(with_retry(timer_ctx.get_scheduler(), 5)).value();
+    auto [result] = ex::sync_wait(with_retry(timer_ctx.get_scheduler(), 5)).value();
 
     std::println("succeeded after {} attempts, result = {}", attempts.load(), result);
 }

@@ -1,4 +1,5 @@
 // 13x02-connect_start.cpp
+// =======================
 // The lazy lifecycle, unrolled by hand: connect() joins a sender to a receiver
 // and returns an operation state; start() launches it. This is what consumers
 // like sync_wait do for us.
@@ -12,9 +13,8 @@
 
 #include <exception>
 #include <print>
-#include <utility>
-
 #include <stdexec/execution.hpp>
+#include <utility>
 
 namespace ex = stdexec;
 
