@@ -106,9 +106,27 @@ endif()
 option(ENABLE_NVEXEC_GPU
     "Build the Chapter 13 GPU (nvexec) examples. Requires nvc++/CUDA and a GPU" OFF)
 
+# Boost (Asio and Beast, both header-only) is required by the Chapter 14
+# examples. 1.86 supplies the deferred default completion token and cancel_after,
+# but 14x10-http_v3.cpp uses the result-returning post() added in 1.90, so 1.90
+# is the floor for the chapter as a whole. The examples were validated against
+# 1.92. A system Boost is found automatically. To use another installation, point
+# Boost_ROOT at its prefix on a fresh configure, since a cached Boost_DIR in an
+# existing build directory takes precedence over it:
+#   cmake --preset debug -DBoost_ROOT=/path/to/boost-1.92.0
+find_package(Boost 1.90 CONFIG COMPONENTS headers)
+if(Boost_FOUND)
+    set(BOOST_FOUND TRUE)
+    message(STATUS "Boost ${Boost_VERSION} found at ${Boost_INCLUDE_DIRS}")
+else()
+    set(BOOST_FOUND FALSE)
+    message(STATUS "Boost >= 1.90 not found — skipping the Boost.Asio examples")
+endif()
+
 # Add chapter subdirectories
 add_subdirectory(Chapter03)
 add_subdirectory(Chapter07)
 add_subdirectory(Chapter08)
 add_subdirectory(Chapter12)
 add_subdirectory(Chapter13)
+add_subdirectory(Chapter14)

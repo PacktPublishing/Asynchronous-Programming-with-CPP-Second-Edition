@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  BOOST_VERSION: 1.92.0
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -47,6 +50,29 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{ matrix.version }} 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ matrix.version }} 100
 
+      # Chapter 14 needs Boost >= 1.90 (14x10-http_v3.cpp uses the
+      # result-returning post added in 1.90). Ubuntu 24.04 ships 1.83, so build
+      # a header install from the official archive. Without this step the root
+      # CMakeLists.txt finds no Boost and Chapter14 is skipped silently.
+      - name: Cache Boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: ~/boost-${{ env.BOOST_VERSION }}
+          key: boost-${{ env.BOOST_VERSION }}-ubuntu-24.04
+
+      - name: Install Boost ${{ env.BOOST_VERSION }}
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          V=${{ env.BOOST_VERSION }}
+          U=${V//./_}
+          cd "$RUNNER_TEMP"
+          wget -q https://archives.boost.io/release/$V/source/boost_$U.tar.bz2
+          tar xf boost_$U.tar.bz2
+          cd boost_$U
+          ./bootstrap.sh --prefix=$HOME/boost-$V --with-libraries=system
+          ./b2 -j"$(nproc)" --prefix=$HOME/boost-$V --with-system install
+
       - name: Print compiler version
         run: ${{ matrix.compiler }} --version
 
@@ -63,22 +89,26 @@ jobs:
             stdexec-${{ runner.os }}-${{ matrix.preset }}-
 
       - name: Configure
-        run: cmake --preset ${{ matrix.preset }}
+        run: >
+          cmake --preset ${{ matrix.preset }}
+          -DBoost_ROOT=$HOME/boost-${{ env.BOOST_VERSION }}
 
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
 
-      # The std::execution chapters are skipped rather than failed when stdexec
-      # is missing, so a silent skip would otherwise leave CI green with nothing
-      # built. Assert the binaries actually exist.
-      - name: Verify std::execution examples were built
+      # The std::execution and Boost.Asio chapters are skipped rather than
+      # failed when stdexec or Boost is missing, so a silent skip would otherwise
+      # leave CI green with nothing built. Assert the binaries actually exist.
+      - name: Verify std::execution and Boost.Asio examples were built
         run: |
           set -euo pipefail
           missing=0
           for f in bin/Chapter03/3x19-cpp26_std_execution \
                    bin/Chapter12/12x0{1,2,3,4,5,6,7,8,9}-* \
                    bin/Chapter13/13x0{1,2,3,4,5,6,7,8,9}-* \
-                   bin/Chapter13/13x1{0,1,2,3,4,5}-*; do
+                   bin/Chapter13/13x1{0,1,2,3,4,5}-* \
+                   bin/Chapter14/14x0{1,2,3,4,5,6,7,8,9}-* \
+                   bin/Chapter14/14x1{0,1,2,3,4,5,6,7}-*; do
             if ! compgen -G "$f" > /dev/null; then
               echo "MISSING: $f"; missing=1
             fi
@@ -86,3 +116,4 @@ jobs:
           test "$missing" -eq 0
           echo "Chapter12 binaries: $(ls bin/Chapter12 | wc -l)"
           echo "Chapter13 binaries: $(ls bin/Chapter13 | wc -l)"
+          echo "Chapter14 binaries: $(ls bin/Chapter14 | wc -l)"

@@ -5,8 +5,10 @@ Source code examples for the book published by Packt Publishing.
 ## Requirements
 
 - **Compiler**: GCC 13+ or Clang 16+ with C++23 support for most chapters.
-  **Chapters 12 and 13 need GCC 14+ or Clang 18+**, because every example in
-  them uses `<print>`, which reached libstdc++ in GCC 14.
+  **Chapters 12, 13 and 14 need GCC 14+ or Clang 18+**, because every example
+  in them uses `<print>`, which reached libstdc++ in GCC 14.
+- **Boost 1.90+** (Asio and Beast, header-only) for the Chapter 14 examples,
+  tested with 1.92. See *The Boost.Asio examples (Chapter 14)* below.
 - **Build system**: CMake 3.25+, Ninja (recommended)
 - **OS**: Linux (tested on Ubuntu 24.04)
 - **GPU (optional)**: the two Chapter 13 `.cu` examples need an NVIDIA GPU of
@@ -92,8 +94,10 @@ pull request to `main`. It can also be triggered manually via
 | GCC 14     | `debug-gcc`, `release-gcc`       |
 | Clang 18   | `debug-clang`, `release-clang`   |
 
-The workflow installs Ninja and the requested compiler on Ubuntu 24.04, then
-runs `cmake --preset` and `cmake --build --preset` for each matrix entry.
+The workflow installs Ninja and the requested compiler on Ubuntu 24.04, builds a
+cached header install of Boost from `BOOST_VERSION` in the workflow so the
+Chapter 14 examples are actually compiled, then runs `cmake --preset` and
+`cmake --build --preset` for each matrix entry.
 
 To trigger manually from the CLI:
 
@@ -216,3 +220,36 @@ nvc++ -std=c++23 -stdpar=gpu -I<path-to-stdexec>/include \
 > GCC 14/15 and Clang 18/19. If you hit it, try an older `nvc++` or an older
 > stdexec commit. **These two examples are therefore the only ones in this
 > repository that have not been machine-verified.**
+
+## The Boost.Asio examples (Chapter 14)
+
+Every example in `Chapter14/` needs Boost.Asio, and the HTTP examples also need
+Boost.Beast. Both are header-only. Boost 1.86 supplies the `deferred` default
+completion token and `cancel_after`, but `14x10-http_v3.cpp` uses the
+result-returning `post` added in 1.90, so 1.90 is the floor for the chapter.
+The examples were tested with 1.92.
+
+A system Boost is found automatically. Ubuntu 24.04 ships 1.83, which is too
+old, so install a newer one and point `Boost_ROOT` at its prefix:
+
+```bash
+cmake --preset debug -DBoost_ROOT=/path/to/boost-1.92.0
+cmake --build --preset debug
+```
+
+`find_package` accepts the first sufficiently new Boost it finds, and a cached
+`Boost_DIR` in an existing build directory wins over `Boost_ROOT`. Pass
+`Boost_ROOT` on a fresh configure (delete the build directory first). Without a
+suitable Boost, CMake prints a `STATUS` line and skips the chapter.
+
+`14x14` to `14x17` bridge Asio and `std::execution` through `asio_bridge.hpp`,
+so they also need stdexec, exactly like Chapters 12 and 13. The HTTP service
+examples (`14x05`, `14x06`, `14x10`, `14x13`, `14x16`) listen on port 8080 until
+interrupted. The header comment of each one gives a `curl` command to test it.
+
+By hand:
+
+```bash
+g++ -std=c++23 -I<path-to-boost>/include \
+    Chapter14/14x05-http_v1.cpp -o bin/Chapter14/14x05-http_v1
+```
