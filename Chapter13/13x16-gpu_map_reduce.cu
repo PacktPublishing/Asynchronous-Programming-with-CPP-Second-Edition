@@ -25,20 +25,19 @@
 //         13x16-gpu_map_reduce.cu -o 13x16-gpu_map_reduce
 // See the root CMakeLists.txt (ENABLE_NVEXEC_GPU) and README.md.
 
-#include <cstddef>
-#include <cstdio>
-#include <span>
-
-#include <stdexec/execution.hpp>
-#include <nvexec/stream_context.cuh>
-
 #include <thrust/device_vector.h>
 #include <thrust/sequence.h>
+
+#include <cstddef>
+#include <cstdio>
+#include <nvexec/stream_context.cuh>
+#include <span>
+#include <stdexec/execution.hpp>
 
 namespace ex = stdexec;
 
 int main() {
-    constexpr std::size_t N = 1u << 20;                  // ~1M elements
+    constexpr std::size_t N = 1u << 20;  // ~1M elements
 
     // Device memory: 1, 2, 3, ... on the GPU.
     thrust::device_vector<double> data(N);
