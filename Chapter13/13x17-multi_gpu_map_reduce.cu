@@ -25,20 +25,19 @@
 //         13x17-multi_gpu_map_reduce.cu -o 13x17-multi_gpu_map_reduce
 // See the root CMakeLists.txt (ENABLE_NVEXEC_GPU) and README.md.
 
-#include <cstddef>
-#include <cstdio>
-#include <span>
-
-#include <stdexec/execution.hpp>
-#include <nvexec/multi_gpu_context.cuh>
-
 #include <thrust/sequence.h>
 #include <thrust/universal_vector.h>
+
+#include <cstddef>
+#include <cstdio>
+#include <nvexec/multi_gpu_context.cuh>
+#include <span>
+#include <stdexec/execution.hpp>
 
 namespace ex = stdexec;
 
 int main() {
-    constexpr std::size_t N = 1u << 22;                  // ~4M elements
+    constexpr std::size_t N = 1u << 22;  // ~4M elements
 
     // Managed memory: reachable from every GPU (and the host).
     thrust::universal_vector<double> data(N);

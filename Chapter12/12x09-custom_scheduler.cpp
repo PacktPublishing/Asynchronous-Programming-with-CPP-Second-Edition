@@ -75,6 +75,8 @@ class manual_context {
 // --- The operation state: start() enqueues work that completes the receiver ---
 template <class Receiver>
 struct manual_operation {
+    using operation_state_concept = ex::operation_state_t;
+
     manual_context* ctx;
     Receiver rcvr;
 

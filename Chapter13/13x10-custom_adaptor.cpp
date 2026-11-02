@@ -59,6 +59,8 @@ struct then_receiver {
 // The operation state owns the wrapped sender's operation state.
 template <class Sender, class F, class Receiver>
 struct then_operation {
+    using operation_state_concept = ex::operation_state_t;
+
     ex::connect_result_t<Sender, then_receiver<F, Receiver>> inner_op;
 
     then_operation(Sender&& sndr, F f, Receiver rcvr)

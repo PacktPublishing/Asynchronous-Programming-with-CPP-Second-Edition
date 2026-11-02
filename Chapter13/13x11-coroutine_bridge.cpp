@@ -28,6 +28,8 @@ namespace ex = stdexec;
 // The custom sender of 13x09, unchanged.
 template <class F, class Receiver>
 struct value_operation {
+    using operation_state_concept = ex::operation_state_t;
+
     F func;
     Receiver rcvr;
 
@@ -45,7 +47,7 @@ struct value_sender {
     using sender_concept = ex::sender_t;
 
     using completion_signatures =
-        ex::completion_signatures<ex::set_value_t(std::invoke_result_t<F&>), ex::set_error_t(std::exception_ptr)>;
+        ex::completion_signatures<ex::set_value_t(std::invoke_result_t<F &>), ex::set_error_t(std::exception_ptr)>;
 
     F func;
 
